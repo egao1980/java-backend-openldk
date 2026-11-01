@@ -16,6 +16,8 @@ OpenLDK is GPL-3.0-or-later with the Classpath exception. This system is MIT. It
 
 `JAVA_HOME` should be a JDK 25. If it is unset, OpenLDK fetches Temurin.
 
+The runtime is SBCL outside Windows. OpenLDK `src/jrt.lisp` reads `sb-posix:mmap`, and Windows SBCL does not export it. Jar download and checksum code still loads there.
+
 A system can pull a jar at load time:
 
 ```lisp
