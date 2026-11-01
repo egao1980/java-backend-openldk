@@ -1,0 +1,38 @@
+(in-package #:java-backend-openldk)
+
+(define-condition ldk-error (error)
+  ((message :initarg :message :initform nil :reader ldk-error-message)
+   (cause :initarg :cause :initform nil :reader ldk-error-cause))
+  (:report (lambda (c stream)
+             (format stream "~A" (or (ldk-error-message c) "OpenLDK loader failed"))
+             (when (ldk-error-cause c)
+               (format stream "~%  ~A" (ldk-error-cause c))))))
+
+(define-condition java-library-error (ldk-error)
+  ((coordinates :initarg :coordinates :initform nil :reader java-library-error-coordinates)
+   (path :initarg :path :initform nil :reader java-library-error-path))
+  (:report (lambda (c stream)
+             (format stream "~A" (or (ldk-error-message c) "Java library error"))
+             (when (java-library-error-coordinates c)
+               (format stream " (~A)" (java-library-error-coordinates c)))
+             (when (java-library-error-path c)
+               (format stream " path ~A" (java-library-error-path c))))))
+
+(define-condition checksum-mismatch (java-library-error)
+  ((expected :initarg :expected :reader checksum-mismatch-expected)
+   (actual :initarg :actual :reader checksum-mismatch-actual))
+  (:report (lambda (c stream)
+             (format stream "SHA-256 mismatch for ~A (expected ~A, got ~A)"
+                     (or (java-library-error-path c) "jar")
+                     (checksum-mismatch-expected c)
+                     (checksum-mismatch-actual c)))))
+
+(define-condition jdk-not-found (ldk-error)
+  ((java-home :initarg :java-home :initform nil :reader jdk-not-found-home))
+  (:report (lambda (c stream)
+             (format stream "OpenLDK did not start (JAVA_HOME=~A). ~A"
+                     (or (jdk-not-found-home c) "unset")
+                     (or (ldk-error-message c)
+                         "Point JAVA_HOME at JDK 25, or let OpenLDK fetch Temurin."))
+             (when (ldk-error-cause c)
+               (format stream "~%  ~A" (ldk-error-cause c))))))
