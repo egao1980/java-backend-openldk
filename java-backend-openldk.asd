@@ -1,5 +1,5 @@
 (defsystem "java-backend-openldk"
-  :version "0.1.0"
+  :version "0.1.1"
   :description "Load Java libraries on SBCL through OpenLDK. Downloads use cl-stack-http; checksums use crypto-protocol."
   :author "egao1980"
   :license "MIT"
@@ -7,15 +7,17 @@
                "crypto-protocol"
                ;; OpenLDK src/jrt.lisp reads sb-posix:mmap. Windows SBCL
                ;; does not export that. The GHCR system stays the runtime
-               ;; on SBCL outside Windows.
-               (:feature (:and :sbcl (:not :windows)) "openldk/interop"))
+               ;; on SBCL outside Windows. SBCL itself only pushes :win32;
+               ;; :windows comes from trivial-features, which a fresh image
+               ;; has not loaded when this .asd is read.
+               (:feature (:and :sbcl (:not (:or :windows :win32))) "openldk/interop"))
   :serial t
   :pathname "src"
   :components ((:file "package")
                (:file "conditions")
                (:file "maven")
-               (:file "runtime" :if-feature (:and :sbcl (:not :windows)))
-               (:file "asdf" :if-feature (:and :sbcl (:not :windows))))
+               (:file "runtime" :if-feature (:and :sbcl (:not (:or :windows :win32))))
+               (:file "asdf" :if-feature (:and :sbcl (:not (:or :windows :win32)))))
   :in-order-to ((test-op (test-op "java-backend-openldk/tests")))
   :properties
   ;; serapeum depends on iterate. Client 0.23 leaves a non-registry copy in
